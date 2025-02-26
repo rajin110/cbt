@@ -1,37 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Private Chat Rooms</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger App with Rooms</title>
+    <style>
+        /* Basic CSS for the messenger app */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e6e6e6;
+        }
+
+        .chat-container {
+            background-color: white;
+            width: 400px;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .room-container, .chat-room {
+            display: none;
+        }
+
+        .messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding-right: 10px;
+        }
+
+        .message {
+            background-color: #d3f8e2;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        .message-input-container {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .create-room-container, .join-room-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .room-button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .room-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Room Creation Section -->
-    <div id="room-creation">
-      <h1>Create or Join a Room</h1>
-      <input type="text" id="room-name" placeholder="Room Name">
-      <input type="password" id="room-password" placeholder="Room Password">
-      <button id="create-room">Create Room</button>
-      <button id="join-room">Join Room</button>
+
+<div class="chat-container">
+    <div class="create-room-container" id="create-room-container">
+        <h3>Create a Room</h3>
+        <input type="text" id="room-name" placeholder="Room Name" required>
+        <input type="password" id="room-password" placeholder="Room Password" required>
+        <button class="room-button" id="create-room-btn">Create Room</button>
     </div>
 
-    <!-- Chat Section (Hidden Initially) -->
-    <div id="chat-section" class="hidden">
-      <h2 id="room-title"></h2>
-      <div id="chat-window"></div>
-      <div class="input-container">
-        <input type="text" id="message-input" placeholder="Type a message...">
-        <button id="send-button">Send</button>
-      </div>
+    <div class="join-room-container" id="join-room-container">
+        <h3>Join a Room</h3>
+        <input type="text" id="join-room-name" placeholder="Room Name" required>
+        <input type="password" id="join-room-password" placeholder="Room Password" required>
+        <button class="room-button" id="join-room-btn">Join Room</button>
     </div>
-  </div>
 
-  <!-- Firebase and App Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js"></script>
-  <script src="app.js"></script>
+    <div class="chat-room" id="chat-room">
+        <h3 id="current-room-name"></h3>
+        <div class="messages" id="messages"></div>
+        <div class="message-input-container">
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-message-btn">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentRoom = null;
+    let currentUser = null;
+
+    // Handle creating a room
+    document.getElementById('create-room-btn').addEventListener('click', () => {
+        const roomName = document.getElementById('room-name').value;
+        const roomPassword = document.getElementById('room-password').value;
+
+        if (roomName && roomPassword) {
+            const room = { name: roomName, password: roomPassword, messages: [] };
+            localStorage.setItem(roomName, JSON.stringify(room)); // Save the room to localStorage
+            alert('Room created! You can now join the room.');
+            document.getElementById('create-room-container').style.display = 'none';
+            document.getElementById('join-room-container').style.display = 'block';
+        } else {
+            alert('Please provide both room name and password!');
+        }
+    });
+
+    // Handle joining a room
+    document.getElementById('join-room-btn').addEventListener('click', () => {
+        const roomName = document.getElementById('join-room-name').value;
+        const roomPassword = document.getElementById('join-room-password').value;
+
+        if (roomName && roomPassword) {
+            const room = JSON.parse(localStorage.getItem(roomName));
+
+            if (room && room.password === roomPassword) {
+                currentRoom = room;
+                document.getElementById('join-room-container').style.display = 'none';
+                document.getElementById('chat-room').style.display = 'block';
+                document.getElementById('current-room-name').textContent = roomName;
+                renderMessages();
+            } else {
+                alert('Incorrect room name or password!');
+            }
+        } else {
+            alert('Please provide both room name and password!');
+        }
+    });
+
+    // Handle sending messages
+    document.getElementById('send-message-btn').addEventListener('click', () => {
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value;
+
+        if (message) {
+            currentRoom.messages.push(message);
+            localStorage.setItem(currentRoom.name, JSON.stringify(currentRoom)); // Update room with new message
+            renderMessages();
+            messageInput.value = '';
+        }
+    });
+
+    // Render messages in the current room
+    function renderMessages() {
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = '';
+
+        currentRoom.messages.forEach(msg => {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.textContent = msg;
+            messagesContainer.appendChild(messageElement);
+        });
+    }
+
+    // Initially show the room creation screen
+    document.getElementById('create-room-container').style.display = 'block';
+    document.getElementById('join-room-container').style.display = 'none';
+    document.getElementById('chat-room').style.display = 'none';
+</script>
+
 </body>
 </html>
