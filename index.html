@@ -1,148 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
-    <style>
-        /* Basic CSS styles for the chat interface */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .chat-container {
-            width: 100%;
-            max-width: 600px;
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 80vh;
-        }
-
-        .messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-right: 10px;
-            margin-bottom: 10px;
-        }
-
-        .message {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .user-message {
-            background-color: #d3f8e2;
-            text-align: left;
-            margin-left: 10px;
-            border-radius: 20px;
-        }
-
-        .bot-message {
-            background-color: #f0f0f0;
-            text-align: right;
-            margin-right: 10px;
-            border-radius: 20px;
-        }
-
-        input[type="text"] {
-            width: calc(100% - 90px);
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            width: 80px;
-            padding: 10px;
-            margin-top: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Chat Rooms</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-    <div class="chat-container">
-        <div class="messages" id="messages"></div>
-        <div>
-            <input type="text" id="user-input" placeholder="Ask me anything...">
-            <button id="send-btn">Send</button>
-        </div>
+  <div class="container">
+    <!-- Room Creation Section -->
+    <div id="room-creation">
+      <h1>Create or Join a Room</h1>
+      <input type="text" id="room-name" placeholder="Room Name">
+      <input type="password" id="room-password" placeholder="Room Password">
+      <button id="create-room">Create Room</button>
+      <button id="join-room">Join Room</button>
     </div>
 
-    <script>
-        const sendButton = document.getElementById('send-btn');
-        const userInput = document.getElementById('user-input');
-        const messagesContainer = document.getElementById('messages');
+    <!-- Chat Section (Hidden Initially) -->
+    <div id="chat-section" class="hidden">
+      <h2 id="room-title"></h2>
+      <div id="chat-window"></div>
+      <div class="input-container">
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <button id="send-button">Send</button>
+      </div>
+    </div>
+  </div>
 
-        // Function to display user and bot messages
-        function appendMessage(message, sender) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
-            messageElement.textContent = message;
-            messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
-        }
-
-        // Function to handle user input and bot response
-        async function handleUserInput() {
-            const userMessage = userInput.value;
-            if (userMessage.trim()) {
-                // Display user message
-                appendMessage(userMessage, 'user');
-
-                // Send the message to the backend for response
-                const response = await fetch('/ask', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ message: userMessage })
-                });
-
-                const data = await response.json();
-
-                // Display bot response
-                appendMessage(data.answer, 'bot');
-
-                // Clear input field
-                userInput.value = '';
-            }
-        }
-
-        // Event listener for sending a message when the button is clicked
-        sendButton.addEventListener('click', handleUserInput);
-
-        // Event listener for sending a message when 'Enter' is pressed
-        userInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                handleUserInput();
-            }
-        });
-    </script>
-
+  <!-- Firebase and App Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
