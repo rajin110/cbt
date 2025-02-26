@@ -115,24 +115,18 @@
                 appendMessage(userMessage, 'user');
 
                 // Send the message to the backend for response
-                const response = await fetch('https://api.openai.com/v1/completions', {
+                const response = await fetch('/ask', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': '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'  // Replace with your OpenAI API key
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        model: 'text-davinci-003',  // You can change this model based on your needs
-                        prompt: userMessage,
-                        max_tokens: 150,
-                        temperature: 0.7
-                    })
+                    body: JSON.stringify({ message: userMessage })
                 });
 
                 const data = await response.json();
 
                 // Display bot response
-                appendMessage(data.choices[0].text.trim(), 'bot');
+                appendMessage(data.answer, 'bot');
 
                 // Clear input field
                 userInput.value = '';
